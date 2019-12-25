@@ -1,5 +1,5 @@
 import numpy as np
-from sag_solver import sag, log_dloss
+from sag_solver import sag, log_dloss, sag_softmax, softmax_dloss, softmax
 from sklearn.metrics import accuracy_score
 
 
@@ -23,7 +23,7 @@ def get_step_size(X, alpha, fit_intercept, classification=True):
 
 class LogitRegression_Li():
     def __init__(self, penalty='l2', tol=1e-4, C=1.0,
-                 fit_intercept=True, random_state=None, solver='sag', max_iter=300):
+                 fit_intercept=True, random_state=None, solver='sag', max_iter=300, n_class=2):
 
         self.penalty = penalty
         self.tol = tol
@@ -32,8 +32,10 @@ class LogitRegression_Li():
         self.random_state = random_state
         self.solver = solver
         self.max_iter = max_iter
+        self.argmax = lambda x:np.argmax(x, 1)
+        self.n_class = n_class
 
-    def fit(self, X, y, sample_weight=None):
+    def fit_bi(self, X, y):
         '''
         use training data to fit the weight
         '''
@@ -46,7 +48,24 @@ class LogitRegression_Li():
                                    saga=self.solver == 'saga')
         y[y == -1] = 0
 
-    def score(self, X, y):
+    def fit_multi(self, X, y):
+        n_class = np.max(y) + 1     # class number
+        alpha = 1.1
+        step_size = get_step_size(X, alpha, self.fit_intercept)
+        n_iter = 100
+        self.weights, self.intercept = sag_softmax(X, y, step_size, alpha, n_iter=n_iter,
+                                   dloss=softmax_dloss,
+                                   fit_intercept=self.fit_intercept,
+                                   saga=False, n_class=n_class)
+
+    def fit(self, X, y):
+        if self.n_class == 2:
+            return self.fit_bi(X, y)
+        else:
+            return self.fit_multi(X, y)
+
+
+    def score_bi(self, X, y):
         '''
         use weight to predit the label and given the acc socre
         '''
@@ -57,3 +76,17 @@ class LogitRegression_Li():
         s = accuracy_score(z, y)
         return s
 
+    def score_softmax(self, X, y):
+        z = np.dot(X, self.weights) + self.intercept
+        n = z.shape[0]
+        for i in range(n):
+            z[i] = softmax(z[i])
+        pred = self.argmax(z)
+        s = accuracy_score(pred, y)
+        return s
+
+    def score(self, X, y):
+        if self.n_class == 2:
+            return self.score_bi(X, y)
+        else:
+            return self.score_softmax(X, y)
