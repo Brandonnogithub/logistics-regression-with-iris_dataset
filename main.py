@@ -3,6 +3,7 @@ import argparse
 from sklearn.linear_model import LogisticRegression
 from LogitRegression import LogitRegression_Li
 from data_utils import load_data
+from sklearn import metrics
 
 
 seed = 20191225
@@ -31,7 +32,7 @@ def main():
 
     # build model
     if args.build_in:
-        model = LogisticRegression(penalty='l2',solver='sag',multi_class='multinomial', max_iter=100)
+        model = LogisticRegression(penalty='l2',solver='newton-cg',multi_class='multinomial', max_iter=100)
     else:
         model = LogitRegression_Li(n_class=args.n_class)
 
@@ -41,6 +42,10 @@ def main():
     # eval
     print("Logistic Regression模型训练集的准确率：%.3f" %model.score(x_train, y_train))
     print("Logistic Regression模型测试集的准确率：%.3f" %model.score(x_test, y_test))
+
+    pred = model.predict(x_test)
+    target_names = ['setosa', 'versicolor', 'virginica']
+    print(metrics.classification_report(y_test, pred, target_names = target_names))
 
 
 if __name__ == "__main__":

@@ -64,29 +64,28 @@ class LogitRegression_Li():
         else:
             return self.fit_multi(X, y)
 
-
-    def score_bi(self, X, y):
-        '''
-        use weight to predit the label and given the acc socre
-        '''
+    def predict_bi(self, X):
         z = np.dot(X, self.weights) + self.intercept
         z = Sigmoid(z)
         z[z > 0.5] = 1
         z[z < 0.6] = 0
-        s = accuracy_score(z, y)
-        return s
+        return z
 
-    def score_softmax(self, X, y):
+    def predict_softmax(self, X):
         z = np.dot(X, self.weights) + self.intercept
         n = z.shape[0]
         for i in range(n):
             z[i] = softmax(z[i])
         pred = self.argmax(z)
-        s = accuracy_score(pred, y)
-        return s
+        return pred
+
+    def predict(self, X):
+        if self.n_class == 2:
+            return self.spredict_bi(X)
+        else:
+            return self.predict_softmax(X)
 
     def score(self, X, y):
-        if self.n_class == 2:
-            return self.score_bi(X, y)
-        else:
-            return self.score_softmax(X, y)
+        pred = self.predict(X)
+        s = accuracy_score(y, pred)
+        return s
