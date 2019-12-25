@@ -18,11 +18,11 @@ def main():
     args = parser.parse_args()
 
     # load data
-    x_train, x_test, y_train, y_test = load_data(seed=seed)
+    x_train, x_test, y_train, y_test = load_data(seed=seed, two_class=True)
 
     # build model
     if args.build_in:
-        model = LogisticRegression(penalty='l2',solver='sag',multi_class='multinomial', max_iter=5000)
+        model = LogisticRegression(penalty='l2',solver='sag',multi_class='multinomial', max_iter=100)
     else:
         model = LogitRegression_Li()
 
